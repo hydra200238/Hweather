@@ -6,11 +6,14 @@ class Question extends CI_Controller {
 	{
 		parent::__construct();
 		$this->load->model('question_model');
+		$this->load->model('location_log_model');
 	}
 	public function index()
 	{
 		$value = $this->uri->segment(3);
-		echo json_encode(array('Hello'=>date("Y-m-d H:i:s")));
+		$this->load->library('geolocation');
+		$distance = $this->geolocation->get_distance(32.9697, -96.80322, 29.46786, -98.53506);
+		echo json_encode(array('Hello'=>date("Y-m-d H:i:s"),'price' => QUESTION_PUSH_PRICE , 'distance' => $distance));
 	}
 	public function get_question()
 	{
@@ -21,16 +24,61 @@ class Question extends CI_Controller {
 	}
 	public function insert_question()
 	{
+		$status = '';
+		$msg = '';
 		$user_id = $this->input->post('user_id',true);
 		$question_latitude = $this->input->post('question_latitude',true);
 		$question_longitude = $this->input->post('question_longitude',true);
 		$question_time = date("Y-m-d H:i:s");
-		$user_id = $this->input->post('user_id',true);
-		$user_id = $this->input->post('user_id',true);
+		$question_content = $this->input->post('question_content',true);
+		$question_distance_limited = $this->input->post('question_distance_limited',true);
+		$question_is_photo_needed = $this->input->post('question_is_photo_needed',true);
+		$question_time_left = $this->input->post('question_time_left',true);
+		$question_reward = $this->input->post('question_reward',true);
 		
-		$data = array('user_id'=>'2');
-		$result = $this->question_model->insert_question($data);
-		
-		echo json_encode(array('result'=>$result));
+		$is_pay = $this->input->post('is_pay',true);
+
+		if(!empty($question_content)||!empty($question_reward))
+		{
+			$data = array(
+				'user_id' => $user_id,
+				'question_latitude' => $question_latitude,
+				'question_longitude' => $question_longitude,
+				'question_time' => $question_time,
+				'question_content' => $question_content,
+				'question_distance_limited' => $question_distance_limited,
+				'question_is_photo_needed' => $question_is_photo_needed,
+				'question_time_left' => $question_time_left,
+				'question_reward' => $question_reward,
+			);
+			
+			if($this->question_model->insert_question($data))
+			{
+				if($is_pay)
+				{
+					
+				}
+				else
+				{
+					
+					
+				}		
+				$status = 'ok';
+				$msg = 'Question insert sucessfully.';
+			}
+			else
+			{
+				$status = 'fail';
+				$msg = 'Question insert Databse error.';
+			}		
+		}
+		else
+		{
+			$status = 'fail';
+			$msg = 'miss post value';
+		}
+		echo json_encode(array('status' => $status , 'msg' => $msg));
 	}
+	
+	
 }
